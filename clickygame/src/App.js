@@ -1,87 +1,105 @@
-//imports dependencies and files
 import React, { Component } from "react";
-import Navbar from "./components/Navbar";
-import Jumbotron from "./components/Jumbotron";
 import FriendCard from "./components/FriendCard";
-import Footer from "./components/Footer";
-import fish from "./fish.json";
+import Nav from "./components/Nav";
+import Wrapper from "./components/Wrapper";
+import Title from "./components/Title";
+import Container from "./Container";
+import Row from "./Row";
+import Column from "./Column";
+import friends from "./friends.json";
 import "./App.css";
 
-//sets state to 0 or empty
+function shuffleFriends(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 class App extends Component {
+  // Set this.state
   state = {
-    fish,
-    clickedFish: [],
-    score: 0
+    friends,
+    currentScore: 0,
+    topScore: 0,
+    rightWrong: "",
+    clicked: [],
   };
 
-//when you click on a card ... the fish is taken out of the array
-  imageClick = event => {
-    const currentFish = event.target.alt;
-    const FishAlreadyClicked =
-      this.state.clickedFish.indexOf(currentFish) > -1;
-
-//if you click on a fish that has already been selected, the game is reset and cards reordered
-    if (FishAlreadyClicked) {
-      this.setState({
-        fish: this.state.fish.sort(function(a, b) {
-          return 0.5 - Math.random();
-        }),
-        clickedFish: [],
-        score: 0
-      });
-        alert("You lose. Play again?");
-
-//if you click on an available fish, your score is increased and cards reordered
+  handleClick = id => {
+    if (this.state.clicked.indexOf(id) === -1) {
+      this.handleIncrement();
+      this.setState({ clicked: this.state.clicked.concat(id) });
     } else {
-      this.setState(
-        {
-          fish: this.state.fish.sort(function(a, b) {
-            return 0.5 - Math.random();
-          }),
-          clickedFish: this.state.clickedFish.concat(
-            currentFish
-          ),
-          score: this.state.score + 1
-        },
-//if you get all 12 fish corrent you get a congrats message and the game resets        
-        () => {
-          if (this.state.score === 12) {
-            alert("Yay! You Win!");
-            this.setState({
-              fish: this.state.fish.sort(function(a, b) {
-                return 0.5 - Math.random();
-              }),
-              clickedFish: [],
-              score: 0
-            });
-          }
-        }
-      );
+      this.handleReset();
     }
   };
 
-//the order of components to be rendered: navbar, jumbotron, friendcard, footer 
+  handleIncrement = () => {
+    const newScore = this.state.currentScore + 1;
+    this.setState({
+      currentScore: newScore,
+      rightWrong: ""
+    });
+    if (newScore >= this.state.topScore) {
+      this.setState({ topScore: newScore });
+    }
+    else if (newScore === 12) {
+      this.setState({ rightWrong: "You win!" });
+    }
+    this.handleShuffle();
+  };
+
+  handleReset = () => {
+    this.setState({
+      currentScore: 0,
+      topScore: this.state.topScore,
+      rightWrong: "khe!!",
+      clicked: []
+    });
+    this.handleShuffle();
+  };
+
+  handleShuffle = () => {
+    let shuffledFriends = shuffleFriends(friends);
+    this.setState({ friends: shuffledFriends });
+  };
+
   render() {
     return (
-      <div>
-        <Navbar 
-          score={this.state.score}
+      <Wrapper>
+        <Nav
+          title="birb memes"
+          score={this.state.currentScore}
+          topScore={this.state.topScore}
+          rightWrong={this.state.rightWrong}
         />
-        <Jumbotron />
-        <div className="wrapper">
-          {this.state.fish.map(fish => (
-            <FriendCard
-              imageClick={this.imageClick}
-              id={fish.id}
-              key={fish.id}
-              image={fish.image}
-            />
-          ))}
-        </div>
-        <Footer />
-      </div>
+
+        <Title>
+          Click on a birb, then never click on that birb again.
+        </Title>
+
+        <Container>
+          <Row>
+            {this.state.friends.map(friend => (
+              <Column size="md-3 sm-6">
+                <FriendCard
+                  key={friend.id}
+                  handleClick={this.handleClick}
+                  handleIncrement={this.handleIncrement}
+                  handleReset={this.handleReset}
+                  handleShuffle={this.handleShuffle}
+                  id={friend.id}
+                  image={friend.image}
+                />
+              </Column>
+            ))}
+          </Row>
+        </Container>
+      </Wrapper>
     );
   }
 }
+
 export default App;
